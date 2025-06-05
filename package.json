@@ -1,0 +1,14 @@
+{
+  "name": "openapi-changes-bug",
+  "version": "0.0.0",
+  "main": "index.js",
+  "scripts": {
+    "yaml-check": "openapi-changes summary api/openapi.yaml api/openapi-new.yaml"
+  },
+  "author": "Bret Comnes <bcomnes@gmail.com> (https://bret.io/)",
+  "license": "MIT",
+  "description": "",
+  "devDependencies": {
+    "@pb33f/openapi-changes": "^0.0.79"
+  }
+}

@@ -1,0 +1,268 @@
+openapi: 3.0.3
+info:
+  title: Simple API
+  description: A simple API with one route that accepts query parameters
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@example.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.example.com/v1
+    description: Production server
+  - url: http://localhost:3000
+    description: Development server
+
+paths:
+  /items:
+    get:
+      summary: Get items
+      description: Retrieve a list of items based on query parameters
+      operationId: getItems
+      parameters:
+        - name: category
+          in: query
+          description: Filter items by category
+          required: false
+          schema:
+            type: string
+            enum: [electronics, clothing, books, food]
+          example: electronics
+        - name: minPrice
+          in: query
+          description: Minimum price filter
+          required: false
+          schema:
+            type: number
+            format: float
+            minimum: 0
+          example: 10.99
+        - name: maxPrice
+          in: query
+          description: Maximum price filter
+          required: false
+          schema:
+            type: number
+            format: float
+            minimum: 0
+          example: 99.99
+        - name: search
+          in: query
+          description: Search term to filter items by name or description
+          required: false
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+          example: laptop
+        - name: limit
+          in: query
+          description: Maximum number of items to return
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 100
+            default: 20
+          example: 10
+        - name: offset
+          in: query
+          description: Number of items to skip for pagination
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+            default: 0
+          example: 0
+        - name: sortBy
+          in: query
+          description: Field to sort results by
+          required: false
+          schema:
+            type: string
+            enum: [name, price, createdAt, updatedAt]
+            default: createdAt
+          example: price
+        - name: sortOrder
+          in: query
+          description: Sort order (ascending or descending)
+          required: false
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+          example: asc
+        - name: inStockOnly
+          in: query
+          description: Filter to show only items that are in stock
+          required: false
+          schema:
+            type: boolean
+            default: false
+          example: true
+        - name: tags
+          in: query
+          description: Comma-separated list of tags to filter items
+          required: false
+          schema:
+            type: string
+            pattern: '^[a-zA-Z0-9,\-_]+$'
+          example: "featured,sale,new-arrival"
+        - name: minRating
+          in: query
+          description: Minimum average rating (1-5)
+          required: false
+          schema:
+            type: number
+            format: float
+            minimum: 1
+            maximum: 5
+          example: 4.0
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Item'
+                      totalCount:
+                        type: integer
+                        description: Total number of items matching the filters
+                        example: 42
+                      currentPage:
+                        type: integer
+                        description: Current page number based on limit and offset
+                        example: 1
+                      totalPages:
+                        type: integer
+                        description: Total number of pages available
+                        example: 5
+                  metadata:
+                    type: object
+                    properties:
+                      timestamp:
+                        type: string
+                        format: date-time
+                        example: "2024-01-15T10:30:00Z"
+                      version:
+                        type: string
+                        example: "1.0.0"
+        '400':
+          description: Bad request - Invalid query parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                success: false
+                error:
+                  code: "INVALID_PARAMETER"
+                  message: "Invalid price range: minPrice cannot be greater than maxPrice"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                success: false
+                error:
+                  code: "INTERNAL_ERROR"
+                  message: "An unexpected error occurred"
+
+components:
+  schemas:
+    Item:
+      type: object
+      required:
+        - id
+        - name
+        - price
+        - category
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the item
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        name:
+          type: string
+          description: Name of the item
+          example: "Wireless Bluetooth Headphones"
+        description:
+          type: string
+          description: Detailed description of the item
+          example: "High-quality wireless headphones with noise cancellation"
+        price:
+          type: number
+          format: float
+          description: Price of the item in USD
+          example: 79.99
+        category:
+          type: string
+          description: Category of the item
+          enum: [electronics, clothing, books, food]
+          example: electronics
+        inStock:
+          type: boolean
+          description: Whether the item is currently in stock
+          example: true
+        imageUrl:
+          type: string
+          format: uri
+          description: URL to the item's image
+          example: "https://example.com/images/headphones.jpg"
+        createdAt:
+          type: string
+          format: date-time
+          description: When the item was added to the catalog
+          example: "2024-01-10T08:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: When the item was last updated
+          example: "2024-01-14T15:30:00Z"
+
+    Error:
+      type: object
+      required:
+        - success
+        - error
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          required:
+            - code
+            - message
+          properties:
+            code:
+              type: string
+              description: Error code for identifying the type of error
+              example: "VALIDATION_ERROR"
+            message:
+              type: string
+              description: Human-readable error message
+              example: "The provided parameters are invalid"
+            details:
+              type: object
+              description: Additional error details
+              additionalProperties: true
